@@ -1,0 +1,12 @@
+*.swp
+package-lock.json
+node_modules/
+npm-debug.log*
+cdk.context.json
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Workshop helper scripts
+fast-forward
