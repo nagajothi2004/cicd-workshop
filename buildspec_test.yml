@@ -8,7 +8,15 @@ phases:
       - python -m venv .venv
       - . .venv/bin/activate
       - pip install -r requirements.txt
+
   build:
     commands:
       - echo run tests...
-      - python -m pytest
+      - python -m pytest --junitxml=pytest_reports/junit.xml
+
+reports:
+  pytest_reports:
+    files:
+      - junit.xml
+    base-directory: ./hello-app/pytest_reports
+    file-format: JUNITXML
