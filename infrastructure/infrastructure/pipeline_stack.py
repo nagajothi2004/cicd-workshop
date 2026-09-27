@@ -1,11 +1,9 @@
-
 from constructs import Construct
 from aws_cdk import (
     Stack,
     aws_codepipeline as codepipeline,
     aws_codebuild as codebuild,
     aws_codepipeline_actions as codepipeline_actions,
-    aws_ecr as ecr,
     aws_iam as iam,
 )
 
@@ -14,12 +12,21 @@ from infrastructure.repo_connection import RepoConnection
 
 class PipelineStack(Stack):
 
-    def __init__(self, scope: Construct, id: str, ecr_repository, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        id: str,
+        ecr_repository,
+        test_app_fargate,
+        **kwargs,
+    ) -> None:
         super().__init__(scope, id, **kwargs)
 
         self.source = RepoConnection(self)
 
+        # -----------------------------------------
         # Create CodePipeline
+        # -----------------------------------------
         pipeline = codepipeline.Pipeline(
             self,
             "Pipeline",
@@ -91,6 +98,7 @@ class PipelineStack(Stack):
         # -----------------------------------------
         source_output = codepipeline.Artifact()
         unit_test_output = codepipeline.Artifact()
+        docker_build_output = codepipeline.Artifact()
 
         # -----------------------------------------
         # Source Action
@@ -124,6 +132,7 @@ class PipelineStack(Stack):
             action_name="Docker-Build-Push",
             project=docker_build,
             input=source_output,
+            outputs=[docker_build_output],
         )
 
         pipeline.add_stage(
@@ -131,3 +140,16 @@ class PipelineStack(Stack):
             actions=[docker_build_action],
         )
 
+        # -----------------------------------------
+        # Deploy to Test Environment
+        # -----------------------------------------
+        pipeline.add_stage(
+            stage_name="Deploy-Test",
+            actions=[
+                codepipeline_actions.EcsDeployAction(
+                    action_name="Deploy-Fargate-Test",
+                    service=test_app_fargate.service,
+                    input=docker_build_output,
+                )
+            ],
+        )

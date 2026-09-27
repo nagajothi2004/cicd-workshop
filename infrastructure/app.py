@@ -28,6 +28,7 @@ pipeline_stack = PipelineStack(
     app,
     "PipelineStack",
     ecr_repository=ecr_stack.ecr_data,
+    test_app_fargate=test_env_stack.ecs_service_data,
 )
 
 app.synth()
